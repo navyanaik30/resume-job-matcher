@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Resume Job Matcher</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Resume–Job Matching System</h1>
+
+    <p class="subtitle">
+        Analyze your resume against a job description
+    </p>
+
+    <div class="card">
+
+        <label>Upload Resume PDF</label>
+        <input type="file" id="resume" accept=".pdf">
+
+        <label>Job Description</label>
+
+        <textarea
+            id="jobDescription"
+            placeholder="Paste the job description here..."
+        ></textarea>
+
+        <button type="button" onclick="analyzeResume()">
+            Analyze Resume
+        </button>
+
+    </div>
+
+    <div id="loading" class="loading">
+        Analyzing resume...
+    </div>
+
+    <div id="result" class="result">
+
+        <h2>Analysis Result</h2>
+
+        <!-- Overall Score -->
+        <div class="score">
+            <span id="matchPercentage">0%</span>
+            <p>Overall Match Score</p>
+
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- Prediction -->
+        <h3>Prediction</h3>
+        <p id="matchResult"></p>
+        <p id="scoreMessage"></p>
+
+        <!-- Text Similarity -->
+        <h3>Text Similarity</h3>
+        <p id="textSimilarity"></p>
+
+        <!-- Skill Match -->
+        <h3>Skill Match</h3>
+        <p id="skillPercentage"></p>
+
+        <h3>Matched Skills</h3>
+        <div id="matchedSkills" class="skill-container"></div>
+
+        <h3>Missing Skills</h3>
+        <div id="missingSkills" class="skill-container"></div>
+
+        <h3>Recommended Skills to Learn</h3>
+        <div id="recommendations" class="skill-container"></div>
+
+    </div>
+
+</div>
+
+<script>
+
+async function analyzeResume() {
+
+    const resume = document.getElementById("resume").files[0];
+    const jobDescription =
+        document.getElementById("jobDescription").value;
+
+    if (!resume) {
+        alert("Please select your resume PDF.");
+        return;
+    }
+
+    if (!jobDescription.trim()) {
+        alert("Please enter a job description.");
+        return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("resume", resume);
+    formData.append("job_description", jobDescription);
+
+    const loading = document.getElementById("loading");
+    const result = document.getElementById("result");
+
+    loading.style.display = "block";
+    result.style.display = "none";
+
+    try {
+
+        const response = await fetch(
+            "http://127.0.0.1:5000/analyze",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+        const data = await response.json();
+
+        console.log("RESULT:", data);
+
+        if (!response.ok) {
+            throw new Error(data.error || "Server error");
+        }
+
+        loading.style.display = "none";
+        result.style.display = "block";
+
+        // Overall Match
+        const score = Number(data.match_percentage);
+
+        document.getElementById("matchPercentage").innerText =
+            score.toFixed(2) + "%";
+
+        document.getElementById("progressFill").style.width =
+            score + "%";
+
+        // Prediction
+        document.getElementById("matchResult").innerText =
+            data.match_result;
+
+        // Score Interpretation
+        const scoreMessage =
+            document.getElementById("scoreMessage");
+
+        if (score >= 80) {
+            scoreMessage.innerText =
+                "Excellent match! Your resume strongly matches this job.";
+        }
+        else if (score >= 60) {
+            scoreMessage.innerText =
+                "Good match! Your resume has a strong alignment with this job.";
+        }
+        else {
+            scoreMessage.innerText =
+                "Needs improvement. Consider developing the missing skills.";
+        }
+
+        // Text Similarity
+        document.getElementById("textSimilarity").innerText =
+            data.text_similarity + "%";
+
+        // Skill Match
+        document.getElementById("skillPercentage").innerText =
+            data.skill_match_percentage + "%";
+
+        // Matched Skills
+        const matched =
+            document.getElementById("matchedSkills");
+
+        matched.innerHTML = "";
+
+        data.matched_skills.forEach(function(skill) {
+
+            const span = document.createElement("span");
+
+            span.className = "skill matched";
+
+            span.innerText = "✓ " + skill;
+
+            matched.appendChild(span);
+
+        });
+
+        // Missing Skills
+        const missing =
+            document.getElementById("missingSkills");
+
+        missing.innerHTML = "";
+
+        data.missing_skills.forEach(function(skill) {
+
+            const span = document.createElement("span");
+
+            span.className = "skill missing";
+
+            span.innerText = "✗ " + skill;
+
+            missing.appendChild(span);
+
+        });
+
+        // Recommended Skills
+        const recommendations =
+            document.getElementById("recommendations");
+
+        recommendations.innerHTML = "";
+
+        (data.recommendations || []).forEach(function(skill) {
+
+            const span = document.createElement("span");
+
+            span.className = "skill recommended";
+
+            span.innerText = "→ " + skill;
+
+            recommendations.appendChild(span);
+
+        });
+
+    } catch (error) {
+
+        loading.style.display = "none";
+
+        console.error(error);
+
+        alert("Error: " + error.message);
+    }
+}
+
+</script>
+
+</body>
+</html>

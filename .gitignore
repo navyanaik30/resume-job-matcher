@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+uploaded_resume.pdf
+
+# Personal files
+sample_resume.pdf
+
+# Environment
+.venv/
+venv/
+.env
