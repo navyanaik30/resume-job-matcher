@@ -1,3 +1,4 @@
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
@@ -85,8 +86,11 @@ def analyze():
     else:
         match_result = "Poor Match"
 
-    # Model probability
-    probability = model.predict_proba(features)[0][1]
+    probability = float(model.predict_proba(features)[0][1])
+
+    # Ensure probability stays between 0 and 1
+    probability = max(0.0, min(probability, 1.0))
+
     ml_score = probability * 100
 
     # -----------------------------
@@ -98,6 +102,9 @@ def analyze():
         + (text_similarity * 0.20),
         2
     )
+
+    # Keep overall score within 0–100
+    match_percentage = max(0, min(match_percentage, 100))
 
     # -----------------------------
     # 6. Recommendations
