@@ -43,6 +43,33 @@ def analyze():
     resume_text = extract_text_from_pdf(pdf_path)
 
     # -----------------------------
+    # Resume validation
+    # -----------------------------
+    resume_text_lower = resume_text.lower()
+
+    resume_keywords = [
+        "education",
+        "experience",
+        "skills",
+        "projects",
+        "resume",
+        "qualification",
+        "certification",
+        "objective",
+        "internship"
+    ]
+
+    keyword_count = sum(
+        1 for keyword in resume_keywords
+        if keyword in resume_text_lower
+    )
+
+    if len(resume_text.strip()) < 100 or keyword_count < 2:
+        return jsonify({
+            "error": "The uploaded file does not appear to be a resume. Please upload a valid resume PDF."
+        }), 400
+
+    # -----------------------------
     # 1. Text similarity
     # -----------------------------
     resume_vector = vectorizer.transform([resume_text])

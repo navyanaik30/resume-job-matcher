@@ -110,6 +110,7 @@ async function analyzeResume() {
 
         const response = await fetch(
             "https://resume-job-matcher-801b.onrender.com/analyze",
+            //"http://127.0.0.1:5000/analyze",
             {
                 method: "POST",
                 body: formData
